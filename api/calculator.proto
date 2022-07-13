@@ -1,0 +1,34 @@
+// protoのバージョンの宣言
+syntax = "proto3";
+
+// protoファイルから自動生成させるGoのコードの置き先
+option go_package = "pkg/grpc";
+
+// packageの宣言
+package myapp;
+
+// サービスの定義
+service CalculateService {
+  // サービスが持つメソッドの定義
+  rpc Add (AddRequest) returns (AddResponse);
+  rpc Subtraction (SubtractionRequest) returns (SubtractionResponse);
+}
+
+// 型の定義
+message AddRequest {
+  int64 a = 1;
+  int64 b = 2;
+}
+
+message AddResponse {
+  int64 value = 1;
+}
+
+message SubtractionRequest {
+  int64 a = 1;
+  int64 b = 2;
+}
+
+message SubtractionResponse {
+  int64 value = 1;
+}
