@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/signal"
 
-	hellopb "app/pkg/grpc"
+	pb "app/pkg/grpc"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -30,7 +30,9 @@ func main() {
 	s := grpc.NewServer()
 
 	// 3. gRPCサーバーにGreetingServiceを登録
-	hellopb.RegisterGreetingServiceServer(s, NewMyServer())
+	myServer := NewMyServer()
+	pb.RegisterGreetingServiceServer(s, myServer)
+	pb.RegisterCalculateServiceServer(s, myServer)
 
 	// 4. サーバーリフレクションの設定
 	reflection.Register(s)
@@ -50,13 +52,26 @@ func main() {
 }
 
 type myServer struct {
-	hellopb.UnimplementedGreetingServiceServer
+	pb.UnimplementedGreetingServiceServer
+	pb.UnimplementedCalculateServiceServer
 }
 
-func (s *myServer) Hello(ctx context.Context, req *hellopb.HelloRequest) (*hellopb.HelloResponse, error) {
+func (s *myServer) Hello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloResponse, error) {
 	// リクエストからnameフィールドを取り出して
 	// "Hello, [名前]!"というレスポンスを返す
-	return &hellopb.HelloResponse{
+	return &pb.HelloResponse{
 		Message: fmt.Sprintf("Hello, %s!", req.GetName()),
+	}, nil
+}
+
+func (s *myServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+	return &pb.AddResponse{
+		Value: req.GetA() + req.GetB(),
+	}, nil
+}
+
+func (s *myServer) Subtraction(ctx context.Context, req *pb.SubtractionRequest) (*pb.SubtractionResponse, error) {
+	return &pb.SubtractionResponse{
+		Value: req.GetA() - req.GetB(),
 	}, nil
 }
