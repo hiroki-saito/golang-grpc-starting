@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -77,6 +79,25 @@ func (s *myServer) HelloServerStream(req *pb.HelloRequest, stream pb.GreetingSer
 	}
 	// return文でメソッドを終了させる=ストリームの終わり
 	return nil
+}
+
+func (s *myServer) HelloClientStream(stream pb.GreetingService_HelloClientStreamServer) error {
+	nameList := make([]string, 0)
+	for {
+		// streamのRecvメソッドを呼び出してリクエスト内容を取得する
+		req, err := stream.Recv()
+		// エラーがEOFなら正常終了
+		if errors.Is(err, io.EOF) {
+			message := fmt.Sprintf("Hello, %v!", nameList)
+			return stream.SendAndClose(&pb.HelloResponse{
+				Message: message,
+			})
+		}
+		if err != nil {
+			return err
+		}
+		nameList = append(nameList, req.GetName())
+	}
 }
 
 func (s *myServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
