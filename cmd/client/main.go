@@ -4,9 +4,11 @@ import (
 	hellopb "app/pkg/grpc"
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"io"
 	"log"
 	"os"
 )
@@ -41,7 +43,8 @@ func main() {
 
 	for {
 		fmt.Println("1: send Request")
-		fmt.Println("2: exit")
+		fmt.Println("2: HelloServerStream")
+		fmt.Println("3: exit")
 		fmt.Print("please enter >")
 
 		scanner.Scan()
@@ -52,6 +55,9 @@ func main() {
 			Hello()
 
 		case "2":
+			HelloServerStream()
+
+		case "3":
 			fmt.Println("bye.")
 			goto M
 		}
@@ -72,5 +78,34 @@ func Hello() {
 		fmt.Println(err)
 	} else {
 		fmt.Println(res.GetMessage())
+	}
+}
+
+func HelloServerStream() {
+	fmt.Println("Please enter your name.")
+	scanner.Scan()
+	name := scanner.Text()
+
+	req := &hellopb.HelloRequest{
+		Name: name,
+	}
+	stream, err := client.HelloServerStream(context.Background(), req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for {
+		res, err := stream.Recv()
+		// エラーがEOFなら正常終了
+		if errors.Is(err, io.EOF) {
+			fmt.Println("all the responses have already received.")
+			break
+		}
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(res)
 	}
 }
