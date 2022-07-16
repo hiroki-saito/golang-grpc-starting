@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"time"
 
 	pb "app/pkg/grpc"
 
@@ -62,6 +63,20 @@ func (s *myServer) Hello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloRe
 	return &pb.HelloResponse{
 		Message: fmt.Sprintf("Hello, %s!", req.GetName()),
 	}, nil
+}
+
+func (s *myServer) HelloServerStream(req *pb.HelloRequest, stream pb.GreetingService_HelloServerStreamServer) error {
+	resCount := 5
+	for i := 0; i < resCount; i++ {
+		if err := stream.Send(&pb.HelloResponse{
+			Message: fmt.Sprintf("[%d] Hello, %s!", i, req.GetName()),
+		}); err != nil {
+			return err
+		}
+		time.Sleep(time.Second * 1)
+	}
+	// return文でメソッドを終了させる=ストリームの終わり
+	return nil
 }
 
 func (s *myServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
