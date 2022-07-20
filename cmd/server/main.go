@@ -100,6 +100,25 @@ func (s *myServer) HelloClientStream(stream pb.GreetingService_HelloClientStream
 	}
 }
 
+func (s *myServer) HelloBiStreams(stream pb.GreetingService_HelloBiStreamsServer) error {
+	for {
+		req, err := stream.Recv()
+		fmt.Println("HelloBiStreams")
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		message := fmt.Sprintf("Hello, %v!", req.GetName())
+		if err := stream.Send(&pb.HelloResponse{
+			Message: message,
+		}); err != nil {
+			return err
+		}
+	}
+}
+
 func (s *myServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	return &pb.AddResponse{
 		Value: req.GetA() + req.GetB(),
